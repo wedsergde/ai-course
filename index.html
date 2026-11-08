@@ -846,6 +846,133 @@
     transform: translateX(2px);
   }
 
+  /* ============ 阅读式课堂 ============ */
+  .reader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: none;
+    padding: 28px 20px;
+    background: rgba(45, 24, 16, 0.55);
+    overflow-y: auto;
+  }
+  .reader-overlay.open { display: block; }
+  .reader {
+    width: min(780px, 100%);
+    margin: 0 auto;
+    background: var(--bg2);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(45, 24, 16, 0.3);
+    overflow: hidden;
+    animation: readerIn 0.25s ease;
+  }
+  @keyframes readerIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  .reader-head {
+    position: relative;
+    padding: 26px 30px;
+    background: linear-gradient(135deg, #C8362C, #96271F);
+    color: #fff;
+  }
+  .reader-crumb {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    opacity: 0.82;
+  }
+  .reader-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 10px;
+  }
+  .reader-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .reader-close:hover { background: rgba(255, 255, 255, 0.3); }
+  .reader-body { padding: 28px 30px 10px; }
+  .reader-body p {
+    font-size: 15px;
+    line-height: 2;
+    color: #3A241B;
+    margin-bottom: 18px;
+  }
+  .reader-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 18px 30px 24px;
+    border-top: 1px solid var(--rule);
+    background: var(--bg);
+  }
+  .reader-btn {
+    padding: 10px 18px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--bg2);
+    color: var(--ink);
+    transition: all 0.18s;
+  }
+  .reader-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .reader-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .reader-btn.primary:hover:not(:disabled) {
+    background: #A82A22;
+    color: #fff;
+  }
+  .reader-btn.is-done {
+    background: #2E7D32;
+    border-color: #2E7D32;
+    color: #fff;
+  }
+  .reader-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .reader-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .modal-actions { margin-top: 20px; }
+  .btn-study {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .btn-study:hover { background: #A82A22; }
+
   /* ============ Footer ============ */
   footer {
     border-top: 1px solid var(--rule);
@@ -1746,14 +1873,14 @@
   <div class="progress-card">
     <div class="progress-header">
       <span class="progress-title">学习进度</span>
-      <span class="progress-percent">25% · 继续加油！</span>
+      <span class="progress-percent" id="progressPercent">25% · 继续加油！</span>
     </div>
     <div class="progress-bar">
-      <div class="progress-fill"></div>
+      <div class="progress-fill" id="progressFill"></div>
     </div>
     <div class="stats-grid">
       <div class="stat-item">
-        <div class="stat-value">6</div>
+        <div class="stat-value" id="statDone">6</div>
         <div class="stat-label">已完成课时</div>
       </div>
       <div class="stat-item">
@@ -1761,7 +1888,7 @@
         <div class="stat-label">总课时</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">180</div>
+        <div class="stat-value" id="statMinutes">180</div>
         <div class="stat-label">累计学习（分钟）</div>
       </div>
       <div class="stat-item">
@@ -2087,6 +2214,24 @@
   <p style="margin-top: 6px;">满纸荒唐言，一把辛酸泪。都云作者痴，谁解其中味。</p>
   <p style="margin-top: 12px; font-size: 12px; opacity: 0.7;">© 2026 红楼精读课 · 仅供学习交流使用</p>
 </footer>
+
+<!-- ============ 阅读式课堂 ============ -->
+<div class="reader-overlay" id="readerOverlay" aria-hidden="true">
+  <div class="reader" role="dialog" aria-modal="true" aria-labelledby="readerTitle">
+    <div class="reader-head">
+      <div class="reader-crumb" id="readerCrumb"></div>
+      <div class="reader-title" id="readerTitle"></div>
+      <button class="reader-close" id="readerClose" aria-label="关闭讲义" type="button">&times;</button>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+    <div class="reader-foot">
+      <button class="reader-btn" id="readerPrev" type="button">上一课</button>
+      <button class="reader-btn primary" id="readerDone" type="button">标记完成</button>
+      <button class="reader-btn" id="readerNext" type="button">下一课</button>
+      <span class="reader-count" id="readerCount"></span>
+    </div>
+  </div>
+</div>
 
 <!-- ============ MODAL ============ -->
 <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
@@ -2559,7 +2704,18 @@
               d.quote.p + '</p><cite>' + d.quote.c + '</cite></div></div>';
     }
 
+    if (d.lessonIndex != null) {
+      html += '<div class="modal-actions"><button type="button" class="btn-study" id="btnStartLesson">开始学习 · 进入讲义</button></div>';
+    }
+
     elBlocks.innerHTML = html;
+
+    if (d.lessonIndex != null) {
+      document.getElementById('btnStartLesson').addEventListener('click', function () {
+        closeModal();
+        openReader(d.lessonIndex);
+      });
+    }
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -2642,6 +2798,7 @@
       sub: info.ch.num + " · " + info.ch.name,
       avatar: info.ch.num,
       color: info.ch.color,
+      lessonIndex: i,
       tags: ["第" + (info.idx + 1) + "课", dur, status],
       blocks: [
         { t: "本课概要", p: [desc] },
@@ -2678,6 +2835,273 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
   });
+
+  // ============ 阅读式课堂：讲义正文 ============
+  var LESSON_TEXTS = [
+    [
+      "《红楼梦》的开头不写人间，先写天上。女娲炼石补天，单剩一块未用，弃在大荒山无稽崖青埂峰下。这块石头因“无材补天”而自怨自叹，恰是曹雪芹对自身命运的隐喻——有才而不得用于世。",
+      "石头恳求一僧一道带它下凡，于是有了“幻形入世”的整部故事。全书因此是一部石头自述的回忆录：读者从一开始就知道，繁华终将散场，叙述者是从结局回望过去的人。",
+      "与此并行的还有一段“还泪”公案：西方灵河岸上，赤瑕宫神瑛侍者以甘露灌溉绛珠仙草，仙草立誓下世为人，“把一生的眼泪还他”。木石前盟就此立约——爱情被写成一场必须偿还的债，黛玉泪尽而逝，早在开篇便已注定。"
+    ],
+    [
+      "第一回出场的是两个不起眼的人物：甄士隐与贾雨村。名字即是密码——“甄士隐”谐音“真事隐”，“贾雨村”谐音“假语存”，曹雪芹用两个名字告诉读者：真事被隐藏，假语得流传。",
+      "甄士隐本是姑苏乡宦，家境小康，却在一夜之间失去独女英莲，又遭火灾，最终随跛足道人出家。他的遭际是贾府命运的一次小型预演：由盛而衰，由聚而散。",
+      "贾雨村则相反。他落魄时受甄士隐资助进京赴考，做官后却徇私枉法，为薛蟠的命案“葫芦僧乱判葫芦案”。一条读书人堕落的线索贯穿全书——功名如何腐蚀人心，在他身上写得最清楚。"
+    ],
+    [
+      "贾、史、王、薛四家，是《红楼梦》世界的权力骨架。“护官符”用四句俗谚概括：贾不假，白玉为堂金作马；阿房宫，三百里，住不下金陵一个史；东海缺少白玉床，龙王来请金陵王；丰年好大雪，珍珠如土金如铁。",
+      "四家并非各自为政，而是靠婚姻结成一体：贾母出自史家，王夫人与王熙凤出自王家，薛姨妈是王夫人的妹妹。血缘与姻亲织成一张利益网，官员断案也要先看“护官符”。",
+      "这张网看似牢不可破，实则以权势为唯一黏合剂。一旦元春失宠、贾府获罪，网便瞬间崩解。“树倒猢狲散”不是偶然，而是这种结构的必然结局。"
+    ],
+    [
+      "《红楼梦》的伟大之处，在于它把宏大叙事藏在日常里。一顿螃蟹宴、一次请安、一盒点心，都在无声地写等级。",
+      "月钱的多寡分出主仆，座次的先后分出尊卑，连丫鬟倒茶用哪只杯子都有讲究。刘姥姥进荣国府，看见“一两银子一个”的鸽子蛋，惊叹的不是味道，而是她一生也够不着的世界。",
+      "曹雪芹写这些细节时并不批判，只是如实呈现。正因为不加评判，读者才能自己看见：奢华背后是无数人的劳作，规矩背后是个体的窒息。琐碎处最见功力。"
+    ],
+    [
+      "大观园最初为元春省亲而建，是皇权的产物；省亲之后，元春下旨让姊妹们入园居住，它才变成女儿们的世界。这一转折意味深长：从皇家礼仪转为私人情感，园子获得了自由。",
+      "园中各院落与人物性格一一对应：潇湘馆千竿翠竹，清幽孤高，是黛玉；蘅芜苑香草满院、无花无树，是宝钗的含蓄；怡红院芭蕉海棠、富丽温暖，是宝玉。",
+      "但大观园从来不是乌托邦。抄检大观园一夜，园子的秩序被暴力撕开；此后晴雯被逐、司棋被撵、芳官出家。空间先于人而崩塌：园子的荒芜，正是女儿们命运的预告。"
+    ],
+    [
+      "跛足道人的《好了歌》只有四段，却唱尽了全书：世人都晓神仙好，惟有功名忘不了；古今将相在何方？荒冢一堆草没了。功名、金银、娇妻、儿孙，四样世人最执着的东西，逐一点破。",
+      "甄士隐随后作《好了歌注》，把抽象教义落成具体图景：“陋室空堂，当年笏满床；衰草枯杨，曾为歌舞场。”昨日的繁华与今日的荒凉并置，一句一转，如剪辑般闪过。",
+      "这首歌出现在第一回，等于提前公布了结局。曹雪芹的写法是让读者先知结局，再回看过程——于是每一次欢笑都带了悲音，这就是《红楼梦》特有的苍凉。"
+    ],
+    [
+      "《红楼梦》早期以抄本流传，抄本上常有朱笔批语，批者署名“脂砚斋”。这些批语不是后人的评论，而是与作者同时、甚至参与创作的人写下的旁白。",
+      "批语透露了大量后文线索，如“狱神庙”“悬崖撒手”“好歹留着麝月”，都是通行本中已看不到的情节。它也因此成为探佚学的核心材料。",
+      "脂砚斋是谁？有“作者叔父”“兄弟”“妻子”“情人”等十余种假说。批语中称“芹公子”，语气亲昵，又熟知闺阁细节。谜底未解，但可以确定：这个人离曹雪芹很近，近到能听见他写作时的叹息。"
+    ],
+    [
+      "今天读到的《红楼梦》通常是一百二十回，可曹雪芹生前只写定八十回。前八十回以抄本流传，称“脂评本”；后四十回由程伟元、高鹗整理刊行，称“程高本”。",
+      "两者的差别不只是回数。脂评本保留大量批语、文字更古拙、情节更“未完成”；程高本故事完整、语言更顺畅，但结局被处理成“兰桂齐芳”“家道复初”，与“白茫茫大地真干净”的原意相去甚远。",
+      "后四十回的作者之争已持续两百年。胡适认为是高鹗续作，也有学者主张程伟元所得即为曹氏残稿。这个问题的分量在于：我们读到的究竟是曹雪芹的悲剧，还是别人的团圆？"
+    ],
+    [
+      "黛玉是《红楼梦》的灵魂。她出身书香门第，父亲林如海是巡盐御史，母亲贾敏是贾母之女。父母相继亡故后，她以孤女身份寄居荣国府。",
+      "寄人篱下的处境造就了她的敏感。别人一句无心的话、一份迟来的礼物，她都要反复掂量。这种敏感不是小性儿，而是无依无靠者对世界的高度警觉。",
+      "她的诗才是全书之冠，“心较比干多一窍”说的正是这份灵慧。可灵慧与病体相伴而生：越清醒，越痛苦。她以整个生命去爱，最终也以整个生命去偿还那笔“还泪”的债。"
+    ],
+    [
+      "宝钗出身皇商薛家，“丰年好大雪”的薛，家资巨万。她进京是为待选才人，落选后留在贾府，成为与黛玉并列的另一极。",
+      "她服用“冷香丸”，配方繁复到近乎荒诞：白牡丹花蕊、白荷花蕊、白芙蓉蕊、白梅花蕊各十二两，配雨水、白露、霜降、小雪四时的水。这味药是她的隐喻——以极致的克制，压住体内的“热毒”。",
+      "旧评家赞她“德才兼备”，五四以后又被指为“城府深沉”。两种评价各见一面：她确实周到、克制、合乎礼法，也因此缺少黛玉那种不顾一切的真诚。她是制度里最完美的女儿，也是制度最成功的作品。"
+    ],
+    [
+      "宝玉是贾政与王夫人的次子，生而衔玉，故名宝玉。他不走科举正途，骂读书上进者为“禄蠹”，却把全部心思用在女儿身上。",
+      "“女儿是水做的骨肉”常被当作痴话，其实是全书最锋利的一句判词：他拒绝把人物化，拒绝用功名、地位、利益去衡量一个人。在一个所有人都被标价的世界里，他坚持不标价。",
+      "脂评以“情不情”概括他——对有情者有情，对无情者亦有情。这种情无法在现实中安放，所以他最终“悬崖撒手”，出家而去。他的出家不是顿悟，而是被现实逐出。"
+    ],
+    [
+      "王熙凤是贾琏之妻、王夫人的内侄女，年纪轻轻便掌荣国府家务。秦可卿死后，她协理宁国府，几日内理清积弊，“挥霍指示，任其所为”，才干令人心惊。",
+      "她也是全书最狠的人。弄权铁槛寺，为三千两银子害死两条人命；逼死尤二姐，手段阴毒。她自己说“我不信什么阴司地狱报应”，把权力用到了极致。",
+      "判词“一从二令三人木”历来众说纷纭，一说拆字为“从、令、休”，暗示她由顺从到掌权再到被休的三段命运。脂评透露她后来“哭向金陵事更哀”，冻饿而死——比通行本的病亡更惨烈。"
+    ],
+    [
+      "探春是贾政与赵姨娘之女，庶出的身份是她一生的刺。她理家时革除积弊、不徇私情，连生母来求情也不通融；抄检大观园时，她当面顶撞王善保家的，说“必须先从家里自杀自灭起来，才能一败涂地”。",
+      "晴雯是怡红院的丫鬟，模样标致、口齿伶俐。她撕扇子作千金一笑，病中补雀金裘，性情如火。但她“心比天高，身为下贱”，锋芒最终招来诽谤。",
+      "两人的共同点是“不肯低头”。在一个人人都要学会周全的家族里，锋利就是罪。探春远嫁、晴雯被逐惨死，说明这个制度最先碾碎的，正是最有生命力的那部分人。"
+    ],
+    [
+      "史湘云是贾母的侄孙女，自幼父母双亡，由叔父抚养。她来贾府总是笑声不断，醉眠芍药裀、割腥啖膻，是全书最明亮的一笔。",
+      "妙玉出身仕宦之家，因病出家，住在栊翠庵。她清高孤傲，自称“槛外人”，连黛玉都被她说“大俗人”。可她的孤高里藏着难以言说的身世之痛。",
+      "两人是两种隐逸：湘云以豪爽化解苦难，妙玉以孤高隔绝世界。但结局同样不由自己——湘云“云散高唐，水涔湘江”，妙玉“风尘肮脏违心愿”。豁达与清高，都挡不住命运。"
+    ],
+    [
+      "贾母是荣国府的定海神针。她出身史家，嫁入贾府五十余年，见惯风浪。对宝玉溺爱，对凤姐纵容，对下人宽厚，看似糊涂，实则“不痴不聋，不做家翁”。",
+      "刘姥姥是乡下寡妇，因家计艰难来贾府打秋风。第一次得了二十两银子，第二次带来瓜果回礼，被凤姐、鸳鸯捉弄取笑，她也乐得配合。",
+      "这两次进府的二十两银子，埋下了最动人的伏线：贾府败落后，巧姐被卖，是刘姥姥变卖家产将她救出。全书最有情义的人，恰恰是最没身份的人。贵贱之辨，在这里被彻底翻转。"
+    ],
+    [
+      "《红楼梦》写了四百多个人物，有名有姓者近百。曹雪芹的秘诀之一是对照：黛玉与宝钗、晴雯与袭人、贾政与宝玉、探春与迎春，性格在彼此的映照中显影。",
+      "秘诀之二是“不写完美的人”。宝钗周到却有城府，凤姐能干却狠毒，宝玉体贴却无能，黛玉灵慧却褊狭。每个人都有其局限，因此每个人都是活的。",
+      "秘诀之三是“闲笔”。一个丫鬟的一句闲话、一个婆子的一次口角，往往藏着后文的关键。曹雪芹写人从不用标签，他只让人物自己说话——这正是他高于同时代所有小说家的地方。"
+    ],
+    [
+      "《葬花吟》出自第二十七回。黛玉因昨夜被拒于怡红院门外，误以为宝玉薄情，次日独自葬花，边葬边吟。",
+      "“花谢花飞花满天，红消香断有谁怜”，起句便把落花与自身合为一体。“一年三百六十日，风刀霜剑严相逼”，写的是花境，也是她在贾府的处境。",
+      "全诗最重的一句是“质本洁来还洁去，强于污淖陷渠沟”。她宁愿凋零，也不愿被玷污。这不是少女的伤感，而是一种关于人格的宣言——也正因如此，她的死才成为全书最惨烈的完成。"
+    ],
+    [
+      "第三十七回，探春发起诗社，众人以海棠为题，限韵“盆、魂、痕、昏”。李纨自任社长，评宝玉落第，黛玉、宝钗各有佳作。",
+      "诗社的意义不在诗本身，而在它建立了一个平等场。在这里，主仆、嫡庶、贫富暂时失效，评判标准只有一个：诗的好坏。这是女儿们在现实中得不到的东西。",
+      "诗社最盛时有桃花社、菊花诗、螃蟹咏、芦雪庵联句。可它也随园子的衰败而解散。诗社的兴废，几乎就是大观园兴废的缩影：先是聚，后是散。"
+    ],
+    [
+      "贾府的饮食是身份的语言。茶有老君眉、六安茶、枫露茶，各有讲究：贾母不喝六安，因“我不吃六安茶”；妙玉用旧年蠲的雨水泡茶，又说“一杯为品，二杯即是解渴的蠢物”。",
+      "茄鲞的做法最为著名：茄子去皮切丁，用鸡油炸，再用鸡汤煨，加香菌、新笋、蘑菇、五香腐干、各色干果，收在瓷罐里。刘姥姥听了摇头吐舌：“倒得十来只鸡来配他。”",
+      "曹雪芹写饮食，写的不是味道，而是维持这套讲究所需的庞大的人力与物力。一桌精致背后，是数十人的劳作。奢华的账单，最终由整个家族来付。"
+    ],
+    [
+      "大观园是《红楼梦》最重要的空间，也是中国小说史上写得最细的园林。它由山子野设计，历时一年建成，亭台楼阁、山水花木俱全。",
+      "曹雪芹用植物写人：潇湘馆的竹，象征黛玉的清高与孤直；蘅芜苑的香草，对应宝钗的含蓄内敛；怡红院的海棠芭蕉，写出宝玉的富贵与多情。屋宇的朝向、陈设、匾额，也都是性格的注脚。",
+      "更妙的是，园林承担叙事。元春省亲是它最盛的时刻，刘姥姥游园是它最热闹的时刻，抄检大观园是它崩坏的开始。空间的盛衰与人物的聚散完全同步，园子本身就是一部命运史。"
+    ],
+    [
+      "脂评用八个字概括曹雪芹的伏笔手法：“草蛇灰线，伏脉千里。”意思是线索如蛇行草中、灰洒于地，若不细看便不留痕迹，可一旦回望，处处都在。",
+      "第五回的判词与《红楼梦曲》，提前写定了每个女儿结局；元宵节的灯谜，句句都是谶语；戏台上演的《西厢》《牡丹亭》，也暗合人物命运。",
+      "这种写法让《红楼梦》必须读两遍。第一遍跟着人物走，为他们的欢乐而欢乐；第二遍带着结局回望，才发现每一句笑语都是一声叹息。结构的精巧，最终服务于命运的必然。"
+    ],
+    [
+      "《红楼梦》的结局是“白茫茫大地真干净”。不是某个人死了，而是整个价值系统崩塌了：贾府抄没，大观园荒废，女儿们死的死、散的散、嫁的嫁。",
+      "这种悲剧不同于“好人受难”。曹雪芹写的是一群并不完美的人，在一个注定要崩塌的世界里挣扎。他们的挣扎越真诚，失败就越令人心痛。",
+      "有人说这样的结局太虚无。但虚无恰恰是最彻底的否定：功名、财富、礼法、情爱，一切被世人看重的东西，最后都归于空无。这不是消极，而是一种清醒的悲悯。"
+    ],
+    [
+      "三百年前的故事，今天读来依然刺痛。黛玉的处境让人想到所有寄居者的不安，宝钗的周全让人想到职场里的自我修剪，凤姐的能干与狠辣，几乎就是权力运作的标本。",
+      "更重要的是它对人的态度。曹雪芹不评判，只呈现；不给结论，只给细节。他让我们看见：每个人都是被环境塑造的，也都在环境里尽力活着。",
+      "所以读《红楼梦》不是为了学做人，而是为了学会看人——看一个人的处境、局限与挣扎。这种观看方式，比任何道理都更接近理解。"
+    ],
+    [
+      "“开谈不说红楼梦，读尽诗书也枉然。”这句清人的话说明，《红楼梦》在它诞生的时代就已经成为文化共识。两百年后，它依然是中文世界最常被谈论、也最难被穷尽的小说。",
+      "课程到此结束，但阅读才刚刚开始。建议的延伸材料：胡适《红楼梦考证》看考据的方法，俞平伯《红楼梦辨》看文本的细读，周汝昌《红楼小讲》看人物的体认。",
+      "最后回到那句“满纸荒唐言，一把辛酸泪。都云作者痴，谁解其中味”。曹雪芹把一生写成一场梦，等了两百年，等来无数个愿意解其中味的人——包括此刻的你。"
+    ]
+  ];
+
+  var readerOverlay = document.getElementById('readerOverlay');
+  var readerTitle = document.getElementById('readerTitle');
+  var readerCrumb = document.getElementById('readerCrumb');
+  var readerBody = document.getElementById('readerBody');
+  var readerCount = document.getElementById('readerCount');
+  var btnReaderPrev = document.getElementById('readerPrev');
+  var btnReaderNext = document.getElementById('readerNext');
+  var btnReaderDone = document.getElementById('readerDone');
+  var CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>';
+  var STORE_KEY = 'hlm-course-progress';
+  var completed = {};
+  var currentLesson = 0;
+
+  try {
+    completed = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {};
+  } catch (e) {
+    completed = {};
+  }
+
+  function lessonEls() {
+    return document.querySelectorAll('.lesson-item');
+  }
+
+  function saveProgress() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(completed)); } catch (e) {}
+  }
+
+  function refreshProgress() {
+    var els = lessonEls();
+    var total = els.length;
+    var done = 0;
+    var minutes = 0;
+    for (var i = 0; i < total; i++) {
+      if (completed[i]) {
+        done++;
+        minutes += parseInt(els[i].querySelector('.lesson-duration').textContent, 10) || 0;
+      }
+    }
+    var pct = total ? Math.round(done / total * 100) : 0;
+    var pEl = document.getElementById('progressPercent');
+    var fEl = document.getElementById('progressFill');
+    var dEl = document.getElementById('statDone');
+    var mEl = document.getElementById('statMinutes');
+    if (pEl) pEl.textContent = pct + '% · ' + (done === 0 ? '从第一课开始吧！' : '继续加油！');
+    if (fEl) fEl.style.width = pct + '%';
+    if (dEl) dEl.textContent = done;
+    if (mEl) mEl.textContent = minutes;
+
+    document.querySelectorAll('.chapter').forEach(function (ch) {
+      var items = ch.querySelectorAll('.lesson-item');
+      var cd = 0;
+      items.forEach(function (item) {
+        if (completed[Array.prototype.indexOf.call(els, item)]) cd++;
+      });
+      var fill = ch.querySelector('.chapter-progress-fill');
+      var label = ch.querySelector('.chapter-progress span');
+      if (fill) fill.style.width = Math.round(cd / items.length * 100) + '%';
+      if (label) label.textContent = cd + '/' + items.length;
+    });
+  }
+
+  function markDone(i) {
+    if (completed[i]) return;
+    completed[i] = true;
+    saveProgress();
+    var status = lessonEls()[i].querySelector('.lesson-status');
+    status.className = 'lesson-status done';
+    status.innerHTML = CHECK_SVG;
+    refreshProgress();
+    updateReaderFoot(i);
+  }
+
+  function updateReaderFoot(i) {
+    var total = lessonEls().length;
+    btnReaderPrev.disabled = i <= 0;
+    btnReaderNext.disabled = i >= total - 1;
+    if (completed[i]) {
+      btnReaderDone.textContent = '已完成';
+      btnReaderDone.classList.add('is-done');
+    } else {
+      btnReaderDone.textContent = '标记完成';
+      btnReaderDone.classList.remove('is-done');
+    }
+    readerCount.textContent = '第 ' + (i + 1) + ' 课 / 共 ' + total + ' 课';
+  }
+
+  function openReader(i) {
+    currentLesson = i;
+    var info = chapterOf(i);
+    var el = lessonEls()[i];
+    var title = el.querySelector('.lesson-title').textContent.replace(/^\s*\d+\.\s*/, '');
+    var paras = LESSON_TEXTS[i] || [el.querySelector('.lesson-desc').textContent];
+    readerCrumb.textContent = info.ch.num + ' · ' + info.ch.name;
+    readerTitle.textContent = title;
+    readerBody.innerHTML = paras.map(function (p) { return '<p>' + p + '</p>'; }).join('');
+    updateReaderFoot(i);
+    readerOverlay.classList.add('open');
+    readerOverlay.setAttribute('aria-hidden', 'false');
+    readerOverlay.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeReader() {
+    readerOverlay.classList.remove('open');
+    readerOverlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('readerClose').addEventListener('click', closeReader);
+  readerOverlay.addEventListener('click', function (e) {
+    if (e.target === readerOverlay) closeReader();
+  });
+  btnReaderPrev.addEventListener('click', function () {
+    if (currentLesson > 0) openReader(currentLesson - 1);
+  });
+  btnReaderNext.addEventListener('click', function () {
+    if (currentLesson < lessonEls().length - 1) openReader(currentLesson + 1);
+  });
+  btnReaderDone.addEventListener('click', function () {
+    markDone(currentLesson);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!readerOverlay.classList.contains('open')) return;
+    if (e.key === 'Escape') closeReader();
+    if (e.key === 'ArrowLeft' && currentLesson > 0) openReader(currentLesson - 1);
+    if (e.key === 'ArrowRight' && currentLesson < lessonEls().length - 1) openReader(currentLesson + 1);
+  });
+
+  // 初始化：合并页面原有标记与本地记录，保证勾选状态与统计一致
+  (function initProgress() {
+    var els = lessonEls();
+    for (var i = 0; i < els.length; i++) {
+      var s = els[i].querySelector('.lesson-status');
+      if (s.className.indexOf('done') >= 0) completed[i] = true;
+      if (completed[i]) {
+        s.className = 'lesson-status done';
+        s.innerHTML = CHECK_SVG;
+      }
+    }
+    saveProgress();
+    refreshProgress();
+  })();
 })();
 </script>
 
