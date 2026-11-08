@@ -788,6 +788,11 @@
   }
   .lesson-item:last-child { border-bottom: none; }
   .lesson-item:hover { background: var(--bg); }
+  .lesson-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    background: var(--bg);
+  }
   .lesson-status {
     width: 28px;
     height: 28px;
@@ -2523,7 +2528,7 @@
   var elBlocks = document.getElementById('modalBlocks');
 
   function openModal(id) {
-    var d = DATA[id];
+    var d = typeof id === 'string' ? DATA[id] : id;
     if (!d) return;
     elName.textContent = d.name;
     elSub.textContent = d.sub;
@@ -2575,6 +2580,93 @@
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         openModal(el.getAttribute('data-id'));
+      }
+    });
+  });
+
+  // ============ 课程目录：课时详情 ============
+  var CHAPTERS = [
+    { num: "壹", name: "走进红楼 · 开篇总论", count: 8, color: "#C8362C" },
+    { num: "贰", name: "人物图谱 · 金陵十二钗", count: 8, color: "#5B8C85" },
+    { num: "叁", name: "艺术世界 · 诗词与叙事", count: 5, color: "#B08442" },
+    { num: "肆", name: "结语 · 千古红楼", count: 3, color: "#7A5C61" }
+  ];
+
+  var LESSON_POINTS = [
+    ["女娲补天所遗顽石是全书唯一的“叙事者”：故事由石头自述，天然带出“经历即幻灭”的视角。", "木石前盟在开篇即定下“还泪”之约，把爱情写成一场债务，悲剧结局自此不可逆。"],
+    ["甄士隐谐音“真事隐”，贾雨村谐音“假语存”，开篇两人定下全书真假互文的基调。", "甄士隐由盛而衰、随跛足道人出家的遭际，是贾府命运的一次小型预演。"],
+    ["护官符以四句口诀列出贾史王薛的权势与财富，揭示贵族政治靠血缘与联姻维系。", "四大家族彼此通婚形成利益共同体，也为“树倒猢狲散”的崩塌埋下伏笔。"],
+    ["从月钱、饭菜、请安、座次可读出严格的等级秩序，日常细节是权力结构的具象化。", "刘姥姥初进荣府时惊异于“一两银子一个的鸽子蛋”，正是阶级差距的放大镜。"],
+    ["大观园本为元妃省亲而建，省亲之后转为女儿们的居所，完成从皇权到私情的转移。", "园中院落与人物性格一一对应，空间即性格，园林是人物命运的地图。"],
+    ["《好了歌》以“好”与“了”的对立，唱尽功名、财富、亲情、情爱的最终落空。", "甄士隐的注解把抽象教义落到具体图景，是全书的主题总纲与结局预告。"],
+    ["脂砚斋批语透露大量后文线索与作者身世，其身份至今有十余种假说。", "批语中“芹公子”“石头”等称呼，暗示批者与作者关系极近，甚至可能参与创作。"],
+    ["脂评本多为八十回抄本，保留批语与原本面貌；程高本为一百二十回刻本，补足结局。", "后四十回的作者与真伪之争延续两百年，直接决定我们读到的是谁的《红楼梦》。"],
+    ["黛玉的敏感源于寄人篱下的处境：无父母、无产业，只有贾母的庇护。", "她的诗才与病体互为因果，“情情”二字概括她对世界毫无保留的投入。"],
+    ["冷香丸的繁复配方隐喻宝钗以“克制”包裹热毒，理性是她自我保护的铠甲。", "“任是无情也动人”道出她情感内敛却有力量，评价随时代在“贤”与“伪”之间摇摆。"],
+    ["宝玉以“情不情”对待万物，对无情之物也施以情，构成对功利世界的整体拒绝。", "他厌恶科举与仕途经济，实质是拒绝把人物化为工具，与全书的批判同构。"],
+    ["凤姐协理宁国府展现惊人的管理才能，是“脂粉队里的英雄”。", "判词“一从二令三人木”暗示她从顺从到掌权再到被休弃的三段命运。"],
+    ["探春理家与抄检大观园，展现她的清醒与锋芒；晴雯撕扇、补裘见其烈性。", "两人的“刺”都是对尊严的捍卫，也因此成为制度最先碾碎的对象。"],
+    ["湘云豪爽率真，醉眠芍药裀是全书最明亮的段落，与黛玉的幽怨形成对照。", "妙玉孤高自许、自称“槛外人”，却终陷泥淖，说明出世亦难逃命运。"],
+    ["贾母以“不痴不聋，不做家翁”的通透维系家族平衡，是贾府最后的定海神针。", "刘姥姥三进荣国府，以村妇视角照见贵族兴衰，并在败落后救出巧姐，完成因果闭环。"],
+    ["曹雪芹以对照法写人：黛玉与宝钗、晴雯与袭人、贾政与宝玉，性格在对照中显影。", "书中人物皆有局限、无一是完人，这种复杂性正是其超越时代之处。"],
+    ["《葬花吟》以落花自喻，把个体命运提升为对生命易逝的普遍追问。", "“一年三百六十日，风刀霜剑严相逼”既是花境，也是黛玉处境与全书氛围。"],
+    ["海棠诗社以限韵、限题的竞技形式，展现众女儿才情的差异与等级之外的平等。", "诗社是短暂的乌托邦：一群女性在诗中获得现实中得不到的话语权。"],
+    ["茶（老君眉、六安茶）与酒（合欢酒）的讲究，体现贵族生活的精细与身份区分。", "茄鲞等菜肴的繁复做法，写的是奢华，也写的是维持奢华所需的庞大人力。"],
+    ["潇湘馆的竹、蘅芜苑的香草、怡红院的花木，各以植物喻人物气质。", "园林布局本身承担叙事功能：空间的盛衰与人物的聚散同步推进。"],
+    ["草蛇灰线、伏脉千里，指伏笔如蛇行灰上，细看方见痕迹。", "判词、曲文、灯谜、戏文都是提前写下的结局，读者往往二读时才恍然。"],
+    ["“白茫茫大地真干净”收束全书：一切繁华归于空无，悲剧的本质是价值的整体崩塌。", "这种虚无不是消极，而是对功名富贵最彻底的否定与悲悯。"],
+    ["《红楼梦》对性别、阶层、个体价值的思考，与今天的议题仍然对话。", "它提供的不是答案，而是一种观看世界的方式：在细节里看见人。"],
+    ["“开谈不说红楼梦，读尽诗书也枉然”说明它在清代已成为文化共识。", "延伸阅读：胡适《红楼梦考证》、俞平伯《红楼梦辨》、周汝昌《红楼小讲》。"]
+  ];
+
+  function chapterOf(i) {
+    var acc = 0;
+    for (var k = 0; k < CHAPTERS.length; k++) {
+      var start = acc;
+      acc += CHAPTERS[k].count;
+      if (i < acc) return { ch: CHAPTERS[k], idx: i - start };
+    }
+    return { ch: CHAPTERS[CHAPTERS.length - 1], idx: 0 };
+  }
+
+  function buildLesson(i, el) {
+    var info = chapterOf(i);
+    var title = el.querySelector('.lesson-title').textContent.replace(/^\s*\d+\.\s*/, '');
+    var desc = el.querySelector('.lesson-desc').textContent;
+    var dur = el.querySelector('.lesson-duration').textContent;
+    var cls = el.querySelector('.lesson-status').className;
+    var status = cls.indexOf('done') >= 0 ? '已完成' : (cls.indexOf('current') >= 0 ? '学习中' : '未开始');
+    var pts = LESSON_POINTS[i] || [];
+    return {
+      name: title,
+      sub: info.ch.num + " · " + info.ch.name,
+      avatar: info.ch.num,
+      color: info.ch.color,
+      tags: ["第" + (info.idx + 1) + "课", dur, status],
+      blocks: [
+        { t: "本课概要", p: [desc] },
+        { t: "学习要点", p: pts }
+      ],
+      facts: [
+        { l: "所属章节", v: info.ch.name },
+        { l: "课时长度", v: dur },
+        { l: "学习状态", v: status },
+        { l: "课程编号", v: info.ch.num + " · 第" + (info.idx + 1) + "课" }
+      ]
+    };
+  }
+
+  // 绑定：课程目录中的课时条目
+  document.querySelectorAll('.lesson-item').forEach(function (el, i) {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', '查看课时详情：' + el.querySelector('.lesson-title').textContent);
+    function openLesson() { openModal(buildLesson(i, el)); }
+    el.addEventListener('click', openLesson);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLesson();
       }
     });
   });
